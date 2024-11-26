@@ -29,10 +29,11 @@ We introduce **MET3R**, a metric for multi-view consistency in generated images.
 
 ## 📌 Dependencies
 
-- **Python >= 3.6**
-- **torch >= 2.1.0**
-- **torchvision >= 0.16.0**
-- **CUDA >= 11.3**
+    - Python >= 3.6
+    - PyTorch >= 2.1.0
+    - CUDA >= 11.3
+    - PyTorch3D >= 0.7.5
+    - FeatUp >= 0.1.1
 
 Tested with *CUDA 11.8*, *PyTorch 2.4.1*, *Python 3.10*
 
