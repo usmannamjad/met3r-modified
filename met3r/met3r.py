@@ -212,19 +212,3 @@ class MET3R(Module):
 
 
         return outputs
-
-
-if __name__ == "__main__":
-
-
-    metric = MET3R().cuda()
-
-
-    inputs = torch.randn((10, 2, 3, 256, 256)).cuda()
-    inputs = inputs.clip(-1, 1)
-
-    score, mask = metric(inputs)
-
-
-    # Should be between 0.6 - 0.7
-    print(score.mean().item())
