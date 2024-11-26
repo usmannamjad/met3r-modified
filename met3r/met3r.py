@@ -25,7 +25,7 @@ from pytorch3d.renderer import (
 )
 
 # Load DUSt3R model
-import path_to_dust3r
+import met3r.path_to_dust3r
 from dust3r.model import AsymmetricCroCo3DStereo 
 from dust3r.utils.geometry import xy_grid
 
