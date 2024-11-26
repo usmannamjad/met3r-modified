@@ -2,7 +2,7 @@
 # MET3R: Measuring Multi-View Consistency in Generated Images.
 <h5 align="center">
 
-[![arXiv](https://img.shields.io/badge/Arxiv-2410.23168-b31b1b.svg?logo=arXiv)]()
+[![arXiv]()]()
 [![project page]()]()
 </h5>
 
