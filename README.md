@@ -9,21 +9,24 @@
 ## Abstract
 We introduce MET3R, a metric for multi-view consistency in generated images. Large-scale generative models for multi-view image generation are rapidly advancing the field of 3D inference from sparse observations. However, due to the nature of generative modeling, traditional reconstruction metrics are not suitable to measure the quality of generated outputs and metrics that are independent of the sampling procedure are desperately needed. In this work, we specifically address the aspect of consistency between generated multi-view images, which can be evaluated independently of the specific scene. MET3R uses DUSt3R to obtain dense 3D reconstructions from image pairs in a feed-forward manner, which are used to warp image contents from one view into the other. Then, feature maps of these images are compared to obtain a similarity score that is invariant to view-dependent effects. Using MET3R, we evaluate the consistency of a large set of previous methods and our own, open, multi-view latent diffusion model.
 
-## Dependencies
+## 📌 Dependencies
 
-- torch >= 2.1.0
-- torchvision >= 0.16.0
-- CUDA >= 11.3
+- **Python >= 3.6**
+- **torch >= 2.1.0**
+- **torchvision >= 0.16.0**
+- **CUDA >= 11.3**
 
-## Quick Setup
+Tested with *CUDA 11.8*, *PyTorch 2.4.1*, *Python 3.10*
 
+## 🛠️ Quick Setup
+Simply install MET3R using the following command inside a bash terminal assuming prequisites are aleady installed and working.
 ```bash
 pip install git+https://github.com/mohammadasim98/met3r
 ```
 
-## Manual Install
+## 👷 Manual Install
 
-Additionally MET3R can also be installed manually in a locally. 
+Additionally MET3R can also be installed manually in a local development environment. 
 ### Install Prerequisites
 ```bash
 pip install -r requirements.txt

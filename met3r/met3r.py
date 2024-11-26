@@ -1,15 +1,19 @@
-"""
 
+# import os
+# os.environ['TORCH_HOME'] = '/BS/grl-masim-data/work/torch_models'
 
-"""
-
-import os
-os.environ['TORCH_HOME'] = '/BS/grl-masim-data/work/torch_models'
 import torch
 from torch import Tensor
 from pathlib import Path
 from torch.nn import Module
+from jaxtyping import Float, Bool
+from typing import Union, Tuple
 from einops import rearrange, repeat
+
+# Load featup
+from featup.util import norm, unnorm
+
+# Load Pytorch3D
 from pytorch3d.structures import Pointclouds
 from pytorch3d.renderer import (
     FoVPerspectiveCameras, 
@@ -19,12 +23,9 @@ from pytorch3d.renderer import (
     PointsRasterizer,
     AlphaCompositor,
 )
-from jaxtyping import Float, Bool
-from typing import Union, Tuple
-from featup.util import norm, unnorm
 
 # Load DUSt3R model
-import met3r.path_to_dust3r
+import path_to_dust3r
 from dust3r.model import AsymmetricCroCo3DStereo 
 from dust3r.utils.geometry import xy_grid
 
@@ -73,14 +74,26 @@ class MET3R(Module):
         freeze(self.dust3r)
         freeze(self.upsampler)
 
-    def render(self, point_clouds, **kwargs):
+    def render(
+        self, 
+        point_clouds: Pointclouds, 
+        **kwargs
+    ) -> Tuple[
+            Float[Tensor, "b h w c"], 
+            Float[Tensor, "b 2 h w n"]
+        ]:
+        """Adoped from Pytorch3D https://pytorch3d.readthedocs.io/en/latest/modules/renderer/points/renderer.html
 
+        Args:
+            point_clouds (pytorch3d.structures.PointCloud): Point cloud object to render 
+
+        Returns:
+            images (Float[Tensor, "b h w c"]): Rendered images
+            zbuf (Float[Tensor, "b k h w n"]): Z-buffers for points per pixel
+        """
         with torch.autocast("cuda", enabled=False):
             fragments = self.rasterizer(point_clouds, **kwargs)
 
-        # Construct weights based on the distance of a point to the true point.
-        # However, this could be done differently: e.g. predicted as opposed
-        # to a function of the weights.
         r = self.rasterizer.raster_settings.radius
 
         dists2 = fragments.dists.permute(0, 3, 1, 2)
@@ -108,6 +121,16 @@ class MET3R(Module):
             Float[Tensor, "b h w"] | None, 
             Float[Tensor, "b 2 c h w"] | None
         ]:
+        """Forward function to compute MET3R
+        Args:
+            Inputs (Float[Tensor, "b 2 c h w"]): Normalized input image pairs with values ranging in [-1, 1],
+            return_score_map (bool, False): Return 2D map of feature dissimlarity (Unweighted), 
+            return_projections (bool, False): Return projected feature maps
+
+        Return:
+            score (float): MET3R score which consists of weighted mean of feature dissimlarity
+            mask (bool[Tensor, "b c h w"])
+        """
         
         *_, h, w = images.shape
         # K=2 since we only compare an image pairs
@@ -160,12 +183,12 @@ class MET3R(Module):
         hr_feat = torch.nn.functional.interpolate(hr_feat, (images.shape[-2:]), mode="bilinear")
         hr_feat = rearrange(hr_feat, "... c h w -> ... (h w) c")
         
-        # NOTE: Unproject feature using the point cloud
+        # NOTE: Unproject feature on the point cloud
         features = hr_feat
         ptmps = rearrange(ptmps, "b k h w c -> (b k) (h w) c", b=b, k=2)
         point_cloud = Pointclouds(points=ptmps, features=features)
         
-        # NOTE: Reproject and Render
+        # NOTE: Project and Render
         R = torch.eye(3)
         R[0, 0] *= -1
         R[1, 1] *= -1
@@ -212,3 +235,4 @@ class MET3R(Module):
 
 
         return outputs
+
