@@ -62,6 +62,7 @@ metric = MET3R(
 ).cuda()
 
 # Prepare inputs
+# RGB range must be in [-1, 1]
 inputs = torch.randn((10, 2, 3, 256, 256)).cuda()
 inputs = inputs.clip(-1, 1)
 
