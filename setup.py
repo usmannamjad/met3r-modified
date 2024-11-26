@@ -13,7 +13,6 @@ class GetSubmodules(Command):
         subprocess.check_call(['git', 'submodule', 'update', "--init", "--recursive"])
         build.run(self)
 
-
 setup(
         name="met3r", 
         version=__version__,
