@@ -241,7 +241,7 @@ class MET3R(Module):
         # Weight feature dissimilarity score map with computed mask
         feat_dissim_weighted = (feat_dissim_maps * mask).sum(-1).sum(-1)  / (mask.sum(-1).sum(-1) + 1e-6)
         
-        outputs = (feat_dissim_weighted, mask)
+        outputs = (feat_dissim_weighted)
         if return_overlap_mask:
             outputs += mask
         if return_score_map:
