@@ -113,11 +113,12 @@ class MET3R(Module):
     def forward(
         self, 
         images: Float[Tensor, "b 2 c h w"], 
+        return_overlap_mask: bool=False, 
         return_score_map: bool=False, 
         return_projections: bool=False
     ) -> Tuple[
             float, 
-            Bool[Tensor, "b h w"], 
+            Bool[Tensor, "b h w"] | None, 
             Float[Tensor, "b h w"] | None, 
             Float[Tensor, "b 2 c h w"] | None
         ]:
@@ -125,12 +126,15 @@ class MET3R(Module):
         """Forward function to compute MET3R
         Args:
             images (Float[Tensor, "b 2 c h w"]): Normalized input image pairs with values ranging in [-1, 1],
-            return_score_map (bool, False): Return 2D map of feature dissimlarity (Unweighted), 
+            return_overlap_mask (bool, False): Return 2D map overlapping mask
+            return_score_map (bool, False): Return 2D map of feature dissimlarity (Unweighted) 
             return_projections (bool, False): Return projected feature maps
 
         Return:
             score (Float[Tensor, "b"]): MET3R score which consists of weighted mean of feature dissimlarity
-            mask (bool[Tensor, "b c h w"])
+            mask (bool[Tensor, "b c h w"], optional): Overlapping mask
+            feat_dissim_maps (bool[Tensor, "b h w"], optional): Feature dissimilarity score map
+            proj_feats (bool[Tensor, "b h w c"], optional): Projected and rendered features
         """
         
         *_, h, w = images.shape
@@ -238,7 +242,8 @@ class MET3R(Module):
         feat_dissim_weighted = (feat_dissim_maps * mask).sum(-1).sum(-1)  / (mask.sum(-1).sum(-1) + 1e-6)
         
         outputs = (feat_dissim_weighted, mask)
-
+        if return_overlap_mask:
+            outputs += mask
         if return_score_map:
             outputs += feat_dissim_maps
         

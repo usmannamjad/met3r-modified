@@ -54,11 +54,11 @@ from met3r import MET3R
 
 # Initialize MET3R
 metric = MET3R(
-    img_size=256, # Set it to `None` to use the input resolution on the fly!
-    use_norm=True,
-    feat_backbone="dino16",
-    featup_weights="mhamilton723/FeatUp",
-    dust3r_weights="naver/DUSt3R_ViTLarge_BaseDecoder_512_dpt"
+    img_size=256, # Default. Set to `None` to use the input resolution on the fly!
+    use_norm=True, # Default 
+    feat_backbone="dino16", # Default 
+    featup_weights="mhamilton723/FeatUp", # Default 
+    dust3r_weights="naver/DUSt3R_ViTLarge_BaseDecoder_512_dpt" # Default 
 ).cuda()
 
 # Prepare inputs
@@ -66,7 +66,12 @@ inputs = torch.randn((10, 2, 3, 256, 256)).cuda()
 inputs = inputs.clip(-1, 1)
 
 # Evaluate MET3R
-score, mask = metric(images=inputs, return_score_map=False, return_projections=False)
+score = metric(
+    images=inputs, 
+    return_overlap_mask=False, # Default 
+    return_score_map=False, # Default 
+    return_projections=False # Default 
+)
 
 # Should be between 0.3 - 0.35
 print(score.mean().item())
