@@ -1,4 +1,20 @@
 
+torch
+torchvision
+iopath
+roma
+matplotlib
+tqdm
+opencv-python
+scipy
+einops
+numpy
+jaxtyping
+pytorch-lightning
+torchmetrics
+pyglet<2
+timm==0.4.12
+huggingface-hub[torch]>=0.22
 
-featup @ git+https://github.com/mhamilton723/FeatUp@v0.1.2
-pytorch3d @ git+https://github.com/facebookresearch/pytorch3d.git@v0.7.8
+git+https://github.com/mhamilton723/FeatUp
+git+https://github.com/facebookresearch/pytorch3d.git
