@@ -5,7 +5,6 @@ import sys
 from distutils.cmd import Command
 with open('requirements.txt') as f:
     required = f.read().splitlines()
-print(required)
 __version__ = "0.0.1"
 
 
@@ -14,27 +13,6 @@ class GetSubmodules(Command):
         subprocess.check_call(['git', 'submodule', 'update', "--init", "--recursive"])
         build.run(self)
 
-def get_cuda_version():
-    """Check CUDA version installed on the system."""
-    try:
-        result = subprocess.run(['nvcc', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        output = result.stdout.splitlines()
-        for line in output:
-            if "release" in line.lower():
-                return line.split()[-2]
-    except FileNotFoundError:
-        return None
-
-def get_torch_version(cuda_version=None):
-    """Return the correct torch version string based on the CUDA version."""
-    if cuda_version.startswith('11'):
-        return f'https://download.pytorch.org/whl/cu{cuda_version[:2]}{cuda_version[3]}/torch_stable.html'
-    else:
-        raise Exception("MET3R requires CUDA installation") 
-
-
-__CUDA_VERSION__ = get_cuda_version()
-__TORCH_LINK_VERSION__ = get_torch_version(__CUDA_VERSION__)
 
 setup(
         name="met3r", 
