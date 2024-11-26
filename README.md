@@ -18,7 +18,7 @@ Our metric evaluates the consistency between images $\mathbf{I}_1$ and $\mathbf{
 ## Contents
 - [📓 Abstract](#-abstract)
 - [📌 Dependencies](#-dependencies)
-- [🛠️ Quick Setup](#-quick-setup)
+- [🛠️ Quick Setup](#️-quick-setup)
 - [📣 Example Usage](#-example-usage)
 - [👷 Manual Install](#-manual-install)
 - [📘 Citation](#-citation)
