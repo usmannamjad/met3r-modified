@@ -39,35 +39,35 @@ class MET3R(Module):
 
     def __init__(
         self, 
-        img_size: int=224, 
+        img_size: int | None = 256, 
         use_norm: bool=True,
         feat_backbone: str="dino16",
         featup_weights: str | Path ="mhamilton723/FeatUp",
-        dust3r_weights: str | Path ="naver/DUSt3R_ViTLarge_BaseDecoder_512_dpt"
+        dust3r_weights: str | Path ="naver/DUSt3R_ViTLarge_BaseDecoder_512_dpt",
+        **kwargs
     ) -> None:
+        """Initialize MET3R
+
+        Args:
+            img_size (int, optional): Image size for rasterization. Set to None to allow for rasterization with the input resolution on the fly. Defaults to 224.
+            use_norm (bool, optional): Whether to use norm layers in FeatUp. Refer to https://github.com/mhamilton723/FeatUp?tab=readme-ov-file#using-pretrained-upsamplers. Defaults to True.
+            feat_backbone (str, optional): Feature backbone for FeatUp. Select from ["dino16", "dinov2", "maskclip", "vit", "clip", "resnet50"]. Defaults to "dino16".
+            featup_weights (str | Path, optional): Weight path for FeatUp upsampler. Defaults to "mhamilton723/FeatUp".
+            dust3r_weights (str | Path, optional): Weight path for DUSt3R. Defaults to "naver/DUSt3R_ViTLarge_BaseDecoder_512_dpt".
+        """
         super().__init__()
         self.img_size = img_size
         self.upsampler = torch.hub.load(featup_weights, feat_backbone, use_norm=use_norm)
         self.dust3r = AsymmetricCroCo3DStereo.from_pretrained(dust3r_weights)
-        
-        # Define the settings for rasterization and shading. Here we set the output image to be of size
-        # 512x512. As we are rendering images for visualization purposes only we will set faces_per_pixel=1
-        # and blur_radius=0.0. Refer to raster_points.py for explanations of these parameters. 
+
         raster_settings = PointsRasterizationSettings(
             image_size=img_size, 
-            radius = 0.01,
-            points_per_pixel = 10,
-            bin_size=0
+            points_per_pixel=10,
+            bin_size=0,
+            **kwargs
         )
 
-
-        # Create a points renderer by compositing points using an alpha compositor (nearer points
-        # are weighted more heavily). See [1] for an explanation.
         self.rasterizer = PointsRasterizer(cameras=None, raster_settings=raster_settings)
-        # self.renderer = PointsRenderer(
-        #     rasterizer=rasterizer,
-        #     compositor=AlphaCompositor()
-        # ).cuda()
         self.compositor = AlphaCompositor()
 
 
@@ -121,9 +121,10 @@ class MET3R(Module):
             Float[Tensor, "b h w"] | None, 
             Float[Tensor, "b 2 c h w"] | None
         ]:
+        
         """Forward function to compute MET3R
         Args:
-            Inputs (Float[Tensor, "b 2 c h w"]): Normalized input image pairs with values ranging in [-1, 1],
+            images (Float[Tensor, "b 2 c h w"]): Normalized input image pairs with values ranging in [-1, 1],
             return_score_map (bool, False): Return 2D map of feature dissimlarity (Unweighted), 
             return_projections (bool, False): Return projected feature maps
 
@@ -133,6 +134,17 @@ class MET3R(Module):
         """
         
         *_, h, w = images.shape
+        
+        # Set rasterization settings on the fly based on input resolution
+        if self.img_size is None:
+            raster_settings = PointsRasterizationSettings(
+                    image_size=(h, w), 
+                    radius = 0.01,
+                    points_per_pixel = 10,
+                    bin_size=0
+                )
+            self.rasterizer = PointsRasterizer(cameras=None, raster_settings=raster_settings)
+
         # K=2 since we only compare an image pairs
         # NOTE: Apply DUST3R to get point maps and confidence scores
         view1 = {"img": images[:, 0, ...], "instance": [""]}
