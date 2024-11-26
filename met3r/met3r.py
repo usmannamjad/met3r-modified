@@ -128,7 +128,7 @@ class MET3R(Module):
             return_projections (bool, False): Return projected feature maps
 
         Return:
-            score (float): MET3R score which consists of weighted mean of feature dissimlarity
+            score (Float[Tensor, "b"]): MET3R score which consists of weighted mean of feature dissimlarity
             mask (bool[Tensor, "b c h w"])
         """
         
