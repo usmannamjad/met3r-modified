@@ -6,14 +6,14 @@
 [![project page]()]()
 </h5>
 
-### `TLDR: A differentiable metric to measure multi-view consistency between an image pair`. 
+### `TL;DR: A differentiable metric to measure multi-view consistency between an image pair`. 
 
 ## 🔍 Method Overview 
 <div align="center">
   <img src="assets/method_overview.jpg" width="800"/>
 </div>
 
-Our metric evaluates the consistency between images $\mathbf{I}_1$ and $\mathbf{I}_2$. Given such a pair, we apply **DUSt3R** to obtain dense 3D point maps $\mathbf{X}_1$ and $\mathbf{X}_2$. These point maps are used to project upscaled **DINO** features $\mathbf{F}_1$, $\mathbf{F}_2$ into the coordinate frame of $\mathbf{I}_1$, via unprojecting and rendering. We compare the resulting feature maps $\hat{\mathbf{F}}_1$ and $\hat{\mathbf{F}}_2$ in pixel space to obtain similarity $S(\mathbf{I}_1,\mathbf{I}_2)$.
+**MET3R** evaluates the consistency between images $\mathbf{I}_1$ and $\mathbf{I}_2$. Given such a pair, we apply **DUSt3R** to obtain dense 3D point maps $\mathbf{X}_1$ and $\mathbf{X}_2$. These point maps are used to project upscaled **DINO** features $\mathbf{F}_1$, $\mathbf{F}_2$ into the coordinate frame of $\mathbf{I}_1$, via unprojecting and rendering. We compare the resulting feature maps $\hat{\mathbf{F}}_1$ and $\hat{\mathbf{F}}_2$ in pixel space to obtain similarity $S(\mathbf{I}_1,\mathbf{I}_2)$.
 
 ## Contents
 - [📓 Abstract](#-abstract)
@@ -72,7 +72,7 @@ score = metric(
     return_overlap_mask=False, # Default 
     return_score_map=False, # Default 
     return_projections=False # Default 
-)
+)[0]
 
 # Should be between 0.3 - 0.35
 print(score.mean().item())
