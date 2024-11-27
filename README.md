@@ -35,6 +35,8 @@ We introduce **MET3R**, a metric for multi-view consistency in generated images.
     - PyTorch3D >= 0.7.5
     - FeatUp >= 0.1.1
 
+NOTE: Pytorch3D and FeatUp are automatically installed alongside **MET3R**.
+
 Tested with *CUDA 11.8*, *PyTorch 2.4.1*, *Python 3.10*
 
 ## 🛠️ Quick Setup
