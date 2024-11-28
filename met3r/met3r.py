@@ -200,9 +200,8 @@ class MET3R(Module):
         hr_feat = rearrange(hr_feat, "... c h w -> ... (h w) c")
         
         # NOTE: Unproject feature on the point cloud
-        features = hr_feat
         ptmps = rearrange(ptmps, "b k h w c -> (b k) (h w) c", b=b, k=2)
-        point_cloud = Pointclouds(points=ptmps, features=features)
+        point_cloud = Pointclouds(points=ptmps, features=hr_feat)
         
         # NOTE: Project and Render
         R = torch.eye(3)
@@ -219,7 +218,6 @@ class MET3R(Module):
         with torch.autocast("cuda", enabled=False):
             rendering, zbuf = self.render(point_cloud, cameras=cameras, background_color=[-10000] * features.shape[-1])
         rendering = rearrange(rendering, "(b k) ... -> b k ...",  b=b, k=2)
-        proj_feats = rendering
 
         # Compute overlapping mask
         non_overlap_mask = (rendering == -10000)
@@ -236,7 +234,7 @@ class MET3R(Module):
         # mask = (~(diff > 0.5) * (closest_z != -1).prod(1)) * mask
 
         # Get feature dissimilarity score map
-        feat_dissim_maps = 1 - (proj_feats[:, 1, ...] * proj_feats[:, 0, ...]).sum(-1) / (torch.linalg.norm(proj_feats[:, 1, ...], dim=-1) * torch.linalg.norm(proj_feats[:, 0, ...], dim=-1) + 1e-3)  
+        feat_dissim_maps = 1 - (rendering[:, 1, ...] * rendering[:, 0, ...]).sum(-1) / (torch.linalg.norm(rendering[:, 1, ...], dim=-1) * torch.linalg.norm(rendering[:, 0, ...], dim=-1) + 1e-3)  
             
         # Weight feature dissimilarity score map with computed mask
         feat_dissim_weighted = (feat_dissim_maps * mask).sum(-1).sum(-1)  / (mask.sum(-1).sum(-1) + 1e-6)
@@ -249,7 +247,7 @@ class MET3R(Module):
             outputs += feat_dissim_maps
         
         if return_projections:
-            outputs += proj_feats
+            outputs += rendering
 
         return (*outputs, )
 

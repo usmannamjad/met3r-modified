@@ -74,10 +74,13 @@ score = metric(
     return_overlap_mask=False, # Default 
     return_score_map=False, # Default 
     return_projections=False # Default 
-)[0]
+)[0].detach()
 
 # Should be between 0.3 - 0.35
 print(score.mean().item())
+
+# Clear up GPU memory
+torch.cuda.empty_cache()
 ```
 
 ## 👷 Manual Install
