@@ -1,10 +1,12 @@
 
 # `MEt3R`: Measuring Multi-View Consistency in Generated Images.
-<h5 align="center">
+<a href="https://mohammadasim98.github.io">Mohammad Asim</a><sup>1</sup>, <a href="https://geometric-rl.mpi-inf.mpg.de/people/Wewer.html">Christopher Wewer</a><sup>1</sup>, <a href="https://wimmerth.github.io">Thomas Wimmer</a><sup>1, 2</sup>, <a href="https://www.mpi-inf.mpg.de/departments/computer-vision-and-machine-learning/people/bernt-schiele/">Bernt Schiele</a><sup>1</sup>,  <a href="https://geometric-rl.mpi-inf.mpg.de/people/lenssen.html">Jan Eric Lenssen</a><sup>1</sup>
 
-[![arXiv]()]()
-[![project page]()]()
-</h5>
+*<sup>1</sup>Max Planck Institute for Informatics, Saarland Informatics Campus, <sup>2</sup>ETH Zurich*
+
+<h4 align="left">
+<a href="https://geometric-rl.mpi-inf.mpg.de/met3r/">Project Page</a>
+</h4>
 
 ### `TL;DR: A differentiable metric to measure multi-view consistency between an image pair`. 
 
