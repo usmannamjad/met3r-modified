@@ -24,18 +24,30 @@ from pytorch3d.renderer import (
     AlphaCompositor,
 )
 
-# Load DUSt3R model
-import met3r.path_to_dust3r
-from dust3r.model import AsymmetricCroCo3DStereo 
+import sys
+import os
+import os.path as path
+HERE_PATH = os.getcwd()
+MASt3R_REPO_PATH = path.normpath(path.join(HERE_PATH, '../mast3r'))
+DUSt3R_REPO_PATH = path.normpath(path.join(HERE_PATH, '../mast3r/dust3r'))
+MASt3R_LIB_PATH = path.join(MASt3R_REPO_PATH, 'mast3r')
+DUSt3R_LIB_PATH = path.join(DUSt3R_REPO_PATH, 'dust3r')
+# check the presence of models directory in repo to be sure its cloned
+if path.isdir(MASt3R_LIB_PATH) and path.isdir(DUSt3R_LIB_PATH):
+    # workaround for sibling import
+    sys.path.insert(0, MASt3R_REPO_PATH)
+    sys.path.insert(0, DUSt3R_REPO_PATH)
+else:
+    raise ImportError(f"mast3r and dust3r is not initialized, could not find: {MASt3R_LIB_PATH}.\n "
+                    "Did you forget to run 'git submodule update --init --recursive' ?")
 from dust3r.utils.geometry import xy_grid
-
 
 def freeze(m: Module) -> None:
     for param in m.parameters():
         param.requires_grad = False
     m.eval()
 
-class MET3R(Module):
+class MEt3R(Module):
 
     def __init__(
         self, 
@@ -43,7 +55,11 @@ class MET3R(Module):
         use_norm: bool=True,
         feat_backbone: str="dino16",
         featup_weights: str | Path ="mhamilton723/FeatUp",
-        dust3r_weights: str | Path ="naver/DUSt3R_ViTLarge_BaseDecoder_512_dpt",
+        dust3r_weights: str | Path ="naver/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric",
+        use_mast3r_dust3r: bool=True,
+        use_mast3r_features: bool=False,
+        use_featup: bool=True,
+        use_dust3r_features: bool=False,
         **kwargs
     ) -> None:
         """Initialize MET3R
@@ -52,28 +68,57 @@ class MET3R(Module):
             img_size (int, optional): Image size for rasterization. Set to None to allow for rasterization with the input resolution on the fly. Defaults to 224.
             use_norm (bool, optional): Whether to use norm layers in FeatUp. Refer to https://github.com/mhamilton723/FeatUp?tab=readme-ov-file#using-pretrained-upsamplers. Defaults to True.
             feat_backbone (str, optional): Feature backbone for FeatUp. Select from ["dino16", "dinov2", "maskclip", "vit", "clip", "resnet50"]. Defaults to "dino16".
-            featup_weights (str | Path, optional): Weight path for FeatUp upsampler. Defaults to "mhamilton723/FeatUp".
-            dust3r_weights (str | Path, optional): Weight path for DUSt3R. Defaults to "naver/DUSt3R_ViTLarge_BaseDecoder_512_dpt".
+            featup_weights (str | Path, optional): Weight path for FeatUp upsampler. Defaults to "naver/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric".
+            use_mast3r_dust3r (bool, optional): Set to True to use DUSt3R weights from MASt3R. Defaults to True.
+            use_mast3r_features (bool, optional): Set to True to use MASt3R features instead of FeatUp. Defaults to False.
+            upsample_features (bool, optional): Set to False to use the native features directly from backbone without featup and instead use nearest neighbor upsampling. Defaults to True.
         """
         super().__init__()
         self.img_size = img_size
         self.upsampler = torch.hub.load(featup_weights, feat_backbone, use_norm=use_norm)
-        self.dust3r = AsymmetricCroCo3DStereo.from_pretrained(dust3r_weights)
 
-        raster_settings = PointsRasterizationSettings(
-            image_size=img_size, 
-            points_per_pixel=10,
-            bin_size=0,
-            **kwargs
-        )
+        self.use_mast3r_dust3r = use_mast3r_dust3r
+        self.use_mast3r_features = use_mast3r_features
+        self.use_dust3r_features = use_dust3r_features
+        self.use_featup = use_featup
+        if use_mast3r_dust3r:
+            # Load MASt3R 
+            from mast3r.model import AsymmetricMASt3R 
+            self.dust3r = AsymmetricMASt3R.from_pretrained(dust3r_weights)
+        else:
+            # Load DUSt3R model
+            from dust3r.model import AsymmetricCroCo3DStereo 
+            self.dust3r = AsymmetricCroCo3DStereo.from_pretrained(dust3r_weights)
 
-        self.rasterizer = PointsRasterizer(cameras=None, raster_settings=raster_settings)
+        if self.img_size is not None:
+            self.set_rasterizer(
+                image_size=img_size, 
+                points_per_pixel=10,
+                bin_size=0,
+                **kwargs
+            )
+        
         self.compositor = AlphaCompositor()
 
 
         freeze(self.dust3r)
         freeze(self.upsampler)
+        
+    def set_rasterizer(
+        self,
+        image_size, 
+        points_per_pixel=10,
+        bin_size=0,
+        **kwargs
+    ) -> None:
+        raster_settings = PointsRasterizationSettings(
+            image_size=image_size, 
+            points_per_pixel=points_per_pixel,
+            bin_size=bin_size,
+            **kwargs
+        )
 
+        self.rasterizer = PointsRasterizer(cameras=None, raster_settings=raster_settings)
     def render(
         self, 
         point_clouds: Pointclouds, 
@@ -193,11 +238,41 @@ class MET3R(Module):
         b, k, *_ = images.shape
         images = rearrange(images, "b k c h w -> (b k) c h w")
         images = (images + 1) / 2
-        hr_feat = self.upsampler(norm(images))
+        
+        
+        if self.use_featup:
+            # Some feature backbone may result in a different resolution feature maps than the inputs
+            hr_feat = self.upsampler(norm(images))
+            hr_feat = torch.nn.functional.interpolate(hr_feat, (images.shape[-2:]), mode="bilinear")
+            hr_feat = rearrange(hr_feat, "... c h w -> ... (h w) c")
+            
+        elif self.use_mast3r_dust3r and self.use_mast3r_features:
+            # NOTE: Only for Ablation (Not to be used for measuring consistency)
+            hr_feat = torch.stack([pred1["desc"], pred2["desc"]], dim=1)
+            hr_feat = rearrange(hr_feat, "b k h w c -> (b k) c h w")
+            hr_feat = torch.nn.functional.interpolate(hr_feat, (images.shape[-2:]), mode="bilinear")
+            hr_feat = rearrange(hr_feat, "... c h w -> ... (h w) c")
+        
+        elif self.use_dust3r_features:
+            # NOTE: Only for Ablation (Not to be used for measuring consistency)
+            shape =  torch.tensor(images.shape[-2:])[None].repeat(b, 1)
+            images = rearrange(images, "(b k) c h w -> b k c h w", b=b, k=k)
+            images = 2 * images - 1
+            feat1, feat2, pos1, pos2 = self.dust3r._encode_image_pairs(images[:, 0], images[:, 1], shape, shape)
+            images = (images + 1) / 2
+            images = rearrange(images, "b k c h w -> (b k) c h w")
 
-        # Some feature backbone may result in a different resolution feature maps than the inputs
-        hr_feat = torch.nn.functional.interpolate(hr_feat, (images.shape[-2:]), mode="bilinear")
-        hr_feat = rearrange(hr_feat, "... c h w -> ... (h w) c")
+            hr_feat = torch.stack([feat1, feat2], dim=1)
+            hr_feat = rearrange(hr_feat, "b k (h w) c -> (b k) c h w", h=14, w=14)
+            hr_feat = torch.nn.functional.interpolate(hr_feat, (images.shape[-2:]), mode="bilinear")
+            hr_feat = rearrange(hr_feat, "... c h w -> ... (h w) c")
+            
+        else:
+            hr_feat = self.upsampler.model(norm(images))
+            hr_feat = torch.nn.functional.interpolate(hr_feat, (images.shape[-2:]), mode="nearest")
+            hr_feat = rearrange(hr_feat, "... c h w -> ... (h w) c")
+                
+            
         
         # NOTE: Unproject feature on the point cloud
         ptmps = rearrange(ptmps, "b k h w c -> (b k) (h w) c", b=b, k=2)
@@ -216,13 +291,15 @@ class MET3R(Module):
         
         # Render via point rasterizer to get projected features
         with torch.autocast("cuda", enabled=False):
-            rendering, zbuf = self.render(point_cloud, cameras=cameras, background_color=[-10000] * features.shape[-1])
+            rendering, zbuf = self.render(point_cloud, cameras=cameras, background_color=[-10000] * hr_feat.shape[-1])
         rendering = rearrange(rendering, "(b k) ... -> b k ...",  b=b, k=2)
 
         # Compute overlapping mask
         non_overlap_mask = (rendering == -10000)
         overlap_mask = (1 - non_overlap_mask.float()).prod(-1).prod(1)
-
+        
+        # Zero out regions which do not overlap
+        rendering[non_overlap_mask] = 0.0
 
         # Mask for weighted sum
         mask = overlap_mask
@@ -235,19 +312,18 @@ class MET3R(Module):
 
         # Get feature dissimilarity score map
         feat_dissim_maps = 1 - (rendering[:, 1, ...] * rendering[:, 0, ...]).sum(-1) / (torch.linalg.norm(rendering[:, 1, ...], dim=-1) * torch.linalg.norm(rendering[:, 0, ...], dim=-1) + 1e-3)  
-            
         # Weight feature dissimilarity score map with computed mask
         feat_dissim_weighted = (feat_dissim_maps * mask).sum(-1).sum(-1)  / (mask.sum(-1).sum(-1) + 1e-6)
         
         outputs = [feat_dissim_weighted]
         if return_overlap_mask:
-            outputs += mask
+            outputs.append(mask)
             
         if return_score_map:
-            outputs += feat_dissim_maps
+            outputs.append(feat_dissim_maps)
         
         if return_projections:
-            outputs += rendering
+            outputs.append(rendering)
 
         return (*outputs, )
 

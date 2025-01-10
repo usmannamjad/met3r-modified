@@ -1,3 +1,4 @@
-[submodule "dust3r"]
-	path = dust3r
-	url = https://github.com/naver/dust3r
+
+[submodule "mast3r"]
+	path = mast3r
+	url = https://github.com/naver/mast3r.git

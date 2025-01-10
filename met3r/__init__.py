@@ -1,1 +1,1 @@
-from .met3r import MET3R
+from .met3r import MEt3R
