@@ -115,7 +115,7 @@ pip install git+https://github.com/facebookresearch/pytorch3d.git
 In case of issues related to installing and building Pytorch3D, refer to [Pytorch3d](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md) for more details. 
 
 #### Installing **DUSt3R**
-At the core of **MEt3R** lies [DUSt3R](https://github.com/naver/dust3r) which is used to generate the 3D point maps for feature unprojection and rasterization. Due to LICENSE issues, we adopt **DUSt3R** as a submodule which can be downloaded as follows.
+At the core of **MEt3R** lies [DUSt3R](https://github.com/naver/dust3r) which is used to generate the 3D point maps for feature unprojection and rasterization. We adopt **DUSt3R** as a submodule which can be downloaded as follows:
 ```bash
 git submodule update --init --recursive
 ```
