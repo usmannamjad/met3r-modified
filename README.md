@@ -125,10 +125,10 @@ git submodule update --init --recursive
 When using **MEt3R** in your project, consider citing our work as follows.
 <section class="section" id="BibTeX">
   <div class="container is-max-desktop content">
-    <pre><code>@misc{asim24met3r,
+    <pre><code>@inproceedings{asim24met3r,
     title = {MEt3R: Measuring Multi-View Consistency in Generated Images},
     author = {Asim, Mohammad and Wewer, Christopher and Wimmer, Thomas and Schiele, Bernt and Lenssen, Jan Eric},
-    booktitle = {arXiv},
+    booktitle = {Computer Vision and Pattern Recognition ({CVPR})},
     year = {2024},
 }</code></pre>
   </div>
