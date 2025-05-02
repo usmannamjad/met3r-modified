@@ -10,6 +10,16 @@
 
 ### `TL;DR: A differentiable metric to measure multi-view consistency between an image pair`. 
 
+### 📣 News
+
+- **15.04.2025** - Updates:
+  - Added optical flow-based warping backbone using [`RAFT`](https://arxiv.org/abs/2003.12039).
+  - Added `psnr`, `ssim`, `lpips`, `rmse`, and `mse` metrics on warped RGB images instead of feature maps.
+  - Added `nearest`, `bilinear` and `bicubic` upsampling methods.
+  - Refactored codebase structure.  
+- **26.02.2025** - Accepted to [`CVPR 2025`](https://cvpr.thecvf.com/) 🎉!
+- **10.01.2025** - Initial code releases.
+
 ## 🔍 Method Overview 
 <div align="center">
   <img src="assets/method_overview.jpg" width="800"/>
@@ -17,7 +27,7 @@
 
 **MEt3R** evaluates the consistency between images $\mathbf{I}_1$ and $\mathbf{I}_2$. Given such a pair, we apply **DUSt3R** to obtain dense 3D point maps $\mathbf{X}_1$ and $\mathbf{X}_2$. These point maps are used to project upscaled **DINO** features $\mathbf{F}_1$, $\mathbf{F}_2$ into the coordinate frame of $\mathbf{I}_1$, via unprojecting and rendering. We compare the resulting feature maps $\hat{\mathbf{F}}_1$ and $\hat{\mathbf{F}}_2$ in pixel space to obtain similarity $S(\mathbf{I}_1,\mathbf{I}_2)$.
 
-## Contents
+## 📋 Contents
 - [📓 Abstract](#-abstract)
 - [📌 Dependencies](#-dependencies)
 - [🛠️ Quick Setup](#️-quick-setup)
@@ -49,7 +59,7 @@ pip install git+https://github.com/mohammadasim98/met3r
 ```
 
 
-## 📣 Example Usage
+## 💡 Example Usage
 
 Simply import and use **MEt3R** in your codebase as follows.
 
@@ -61,12 +71,14 @@ IMG_SIZE = 256
 
 # Initialize MEt3R
 metric = MEt3R(
-    img_size=IMG_SIZE, # Default. Set to `None` to use the input resolution on the fly!
-    use_norm=True, # Default 
-    feat_backbone="dino16", # Default 
-    featup_weights="mhamilton723/FeatUp", # Default 
-    dust3r_weights="naver/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric", # Default
-    use_mast3r_dust3r=True # Default. Set to `False` to use original DUSt3R. Make sure to also set the correct weights from huggingface.
+    img_size=IMG_SIZE, # Default to 256, set to `None` to use the input resolution on the fly!
+    use_norm=True, # Default to True 
+    backbone="mast3r", # Default to MASt3R, select from ["mast3r", "dust3r", "raft"]
+    feature_backbone="dino16", # Default to DINO, select from ["dino16", "dinov2", "maskclip", "vit", "clip", "resnet50"]
+    feature_backbone_weights="mhamilton723/FeatUp", # Default
+    upsampler="featup", # Default to FeatUP upsampling, select from ["featup", "nearest", "bilinear", "bicubic"]
+    distance="cosine", # Default to feature similarity, select from ["cosine", "lpips", "rmse", "psnr", "mse", "ssim"]
+    freeze=True, # Default to True
 ).cuda()
 
 # Prepare inputs of shape (batch, views, channels, height, width): views must be 2

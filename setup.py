@@ -5,7 +5,7 @@ import sys
 from distutils.cmd import Command
 with open('requirements.txt') as f:
     required = f.read().splitlines()
-__version__ = "0.0.1"
+__version__ = "1.0.0"
 
 
 class GetSubmodules(Command):
@@ -64,6 +64,7 @@ setup(
                 "pyglet<2",
                 "timm==0.4.12",
                 "huggingface-hub[torch]>=0.22",
+                "lpips",
                 "featup@git+https://github.com/mhamilton723/FeatUp",
                 "pytorch3d@git+https://github.com/facebookresearch/pytorch3d.git",
         ],

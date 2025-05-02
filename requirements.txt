@@ -1,6 +1,7 @@
 
 torch>=2.1.0
 torchvision>=0.15.0
+torchmetrics
 iopath
 roma
 matplotlib
@@ -15,6 +16,6 @@ torchmetrics
 pyglet<2
 timm==0.4.12
 huggingface-hub[torch]>=0.22
-
+lpips
 git+https://github.com/mhamilton723/FeatUp
 git+https://github.com/facebookresearch/pytorch3d.git
