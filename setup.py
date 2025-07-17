@@ -5,7 +5,7 @@ import sys
 from distutils.cmd import Command
 with open('requirements.txt') as f:
     required = f.read().splitlines()
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 
 class GetSubmodules(Command):
