@@ -33,7 +33,7 @@ from pytorch3d.renderer import (
 
 from lpips import LPIPS
 
-HERE_PATH = os.getcwd()
+HERE_PATH = path.normpath(path.dirname(__file__))
 MASt3R_REPO_PATH = path.normpath(path.join(HERE_PATH, '../mast3r'))
 DUSt3R_REPO_PATH = path.normpath(path.join(HERE_PATH, '../mast3r/dust3r'))
 MASt3R_LIB_PATH = path.join(MASt3R_REPO_PATH, 'mast3r')
