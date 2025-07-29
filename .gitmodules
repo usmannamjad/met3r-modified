@@ -2,3 +2,6 @@
 [submodule "mast3r"]
 	path = mast3r
 	url = https://github.com/naver/mast3r.git
+[submodule "vggt"]
+	path = vggt
+	url = https://github.com/facebookresearch/vggt.git
